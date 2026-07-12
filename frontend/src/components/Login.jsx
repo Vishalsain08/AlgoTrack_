@@ -5,7 +5,7 @@ import { loginSuccess } from "../redux/authslice"; // Import action to update Re
 import { useNotification } from "../components/ToastNotification"; // Import notification hook
 import { Eye, EyeOff } from "lucide-react";
 
- const BASE_URL = "http://localhost:5000";
+ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function LoginForm() {
   const { addNotification } = useNotification();
