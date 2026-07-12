@@ -49,10 +49,13 @@ connectToDatabase();
 // Middleware setup
 app.use(
   cors({
-    origin: ["http://localhost:5173","https://codecontesttracker.onrender.com"], // Add frontend domain
+    origin: [
+      "http://localhost:5173",
+      "https://algo-track-kappa.vercel.app",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // Enable credentials if using cookies or auth tokens
+    credentials: true,
   })
 );
 
@@ -78,10 +81,10 @@ app.use("/api/reminders", reminderRoutes);
  * Listen on the specified port from environment variables
  */
 app.listen(port, () => {
-  const baseUrl =
+const baseUrl =
   process.env.NODE_ENV === "production"
-    ? "https://codecontesttracker.onrender.com" // Deployed URL
-    : `http://localhost:${port}`; // Local URL during development
+    ? "https://algotrack-xqf8.onrender.com"
+    : `http://localhost:${port}`;
 
 console.log(`Server is running at ${baseUrl}`);
 });
