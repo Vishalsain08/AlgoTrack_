@@ -12,6 +12,10 @@ const userPass = process.env.EMAIL_PASS;
  * Nodemailer transport configuration
  * Uses Gmail as the email service provider
  */
+
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
