@@ -4,25 +4,20 @@ const cron = require("node-cron");
 
 /**
  * Environment variables for email authentication
- */
-const userEmail = process.env.EMAIL_USER;
-const userPass = process.env.EMAIL_PASS;
 
 /**
  * Nodemailer transport configuration
  * Uses Gmail as the email service provider
  */
 
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "smtp-relay.brevo.com",
   port: 587,
-  secure: true,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.BREVO_LOGIN,
+    pass: process.env.BREVO_SMTP_KEY,
   },
 });
 
