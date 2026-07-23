@@ -13,11 +13,21 @@ const userPass = process.env.EMAIL_PASS;
  * Uses Gmail as the email service provider
  */
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
-    user: userEmail,
-    pass: userPass,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
+});
+
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("SMTP Connected Successfully");
+  }
 });
 
 /**
