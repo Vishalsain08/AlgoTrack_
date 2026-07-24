@@ -88,9 +88,9 @@ const deleteReminder = async (req, res) => {
     }
 
     // Filter out the reminder with matching contestId
-    user.reminderPreferences = user.reminderPreferences.filter(
-      (reminder) => reminder.contestId !== parseInt(contestId)
-    );
+   user.reminderPreferences = user.reminderPreferences.filter(
+  (reminder) => reminder.contestId !== contestId
+);
 
     // Save updated user document
     await user.save();

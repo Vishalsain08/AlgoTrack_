@@ -1,117 +1,136 @@
 const User = require("../models/userModel");
-const nodemailer = require("nodemailer");
 const cron = require("node-cron");
+const axios = require("axios");
 
 /**
- * Environment variables for email authentication
-
-/**
- * Nodemailer transport configuration
- * Uses Gmail as the email service provider
+ * Sends an email reminder using Brevo HTTP API
  */
-
-
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
-  auth: {
-    user: process.env.BREVO_LOGIN,
-    pass: process.env.BREVO_SMTP_KEY,
-  },
-});
-
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log("SMTP Connected Successfully");
-  }
-});
-
-/**
- * Sends an email reminder to a user about an upcoming contest
- * @param {string} email - Recipient's email address
- * @param {string} contestId - Unique identifier for the contest
- * @param {string} platform - The platform hosting the contest (e.g., CodeForces, LeetCode)
- * @param {Date} contestTime - Start time of the contest
- */
-const sendEmailReminder = async (email, contestId, platform, contestTime) => {
-  const mailOptions = {
-    from: `"${process.env.BREVO_SENDER_NAME}" <${process.env.BREVO_SENDER_EMAIL}>`,
-    to: email,
-    subject: `🚨 Reminder: Upcoming ${platform} Contest (ID: ${contestId}) Starts Soon!`,
-    text: `Hello Champion! 🎯
-  
-  This is a reminder that your contest on **${platform}** (Contest ID: ${contestId}) is scheduled to begin at:
-  
-  🕒 **Date & Time:** ${contestTime}
-  
-  Make sure you're ready to give it your best shot! 💡
-  
-  ✅ **Pro Tip:** Double-check your internet connection and login credentials before the contest starts.
-  
-  Best of luck! 🍀
-  Team AlgoTrack
-  `,
-  };
-
+const sendEmailReminder = async (
+  email,
+  contestId,
+  platform,
+  contestTime
+) => {
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(
-      `📧 Email sent successfully to ${email} for contest ${contestId}`
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: process.env.BREVO_SENDER_NAME,
+          email: process.env.BREVO_SENDER_EMAIL,
+        },
+        to: [
+          {
+            email,
+          },
+        ],
+        subject: `🚨 Reminder: Upcoming ${platform} Contest Starts Soon!`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto;">
+              <h2>🚀 Contest Reminder</h2>
+
+              <p>Hello Champion! 👋</p>
+
+              <p>Your contest is about to begin.</p>
+
+              <table cellpadding="8" cellspacing="0" border="1" style="border-collapse:collapse;">
+                <tr>
+                    <td><b>Platform</b></td>
+                    <td>${platform}</td>
+                </tr>
+                <tr>
+                    <td><b>Contest ID</b></td>
+                    <td>${contestId}</td>
+                </tr>
+                <tr>
+                    <td><b>Start Time</b></td>
+                    <td>${contestTime}</td>
+                </tr>
+              </table>
+
+              <br>
+
+              <p>
+              ✅ Check your internet connection<br>
+              ✅ Login beforehand<br>
+              ✅ Keep water nearby 😄
+              </p>
+
+              <h3>Best of luck! 🍀</h3>
+
+              <p><b>Team AlgoTrack</b></p>
+          </div>
+        `,
+      },
+      {
+        headers: {
+          accept: "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json",
+        },
+      }
     );
+
+    console.log("📧 Reminder Email Sent");
+    console.log(response.data);
   } catch (error) {
-    console.error(`❌ Error sending email to ${email}:`, error.message);
+    console.error(
+      "❌ Reminder Email Error:",
+      error.response?.data || error.message
+    );
   }
 };
 
 /**
- * Main function to process reminders for all users
- * Runs periodically to check and send reminders based on user preferences
+ * Processes all reminders
  */
 const processReminders = async () => {
   console.log("🔔 Running reminder cron job...");
 
-  // Get current time in IST (Indian Standard Time)
   const nowIST = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+    new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    })
   );
 
   try {
-    // Fetch all users who have reminder preferences set
-    const users = await User.find({ reminderPreferences: { $exists: true } });
+    const users = await User.find({
+      reminderPreferences: {
+        $exists: true,
+      },
+    });
 
-    // Iterate through each user
     for (const user of users) {
-      // Iterate over a copy of reminders
       for (const reminder of [...user.reminderPreferences]) {
-        const { contestId, platform, method, timeBefore, contestTime } =
-          reminder;
+        const {
+          contestId,
+          platform,
+          method,
+          timeBefore,
+          contestTime,
+        } = reminder;
 
-        // Skip if contest time is not set
         if (!contestTime) continue;
 
-        // Convert contest time to IST
         const contestTimeIST = new Date(
           new Date(contestTime).toLocaleString("en-US", {
             timeZone: "Asia/Kolkata",
           })
         );
 
-        // Calculate reminder time
         const reminderTimeIST = new Date(contestTimeIST);
-        reminderTimeIST.setMinutes(reminderTimeIST.getMinutes() - timeBefore);
+        reminderTimeIST.setMinutes(
+          reminderTimeIST.getMinutes() - timeBefore
+        );
 
-        // Check whether reminder should be sent
-        if (nowIST >= reminderTimeIST && nowIST < contestTimeIST) {
-          console.log(`✅ Time to send reminder to ${user.username}`);
+        if (
+          nowIST >= reminderTimeIST &&
+          nowIST < contestTimeIST
+        ) {
+          console.log(
+            `Sending reminder to ${user.email}`
+          );
 
-          // Email reminder
           if (method === "email" && user.email) {
             await sendEmailReminder(
               user.email,
@@ -121,45 +140,33 @@ const processReminders = async () => {
             );
           }
 
-          // SMS reminder (future implementation)
-          else if (method === "sms" && user.phoneNumber) {
-            await sendSMSReminder(
-              user.phoneNumber,
-              contestId,
-              platform,
-              contestTimeIST
+          user.reminderPreferences =
+            user.reminderPreferences.filter(
+              (r) => r.contestId !== contestId
             );
-          }
 
-          // Remove reminder after it has been sent
-          user.reminderPreferences = user.reminderPreferences.filter(
-            (r) => r.contestId !== contestId
-          );
-
-          // Save updated user
           await user.save();
 
           console.log(
-            `🗑️ Reminder for contest ${contestId} removed from ${user.username}`
+            `Reminder removed for contest ${contestId}`
           );
         }
       }
     }
 
     console.log("✅ Reminders processed successfully.");
-  } catch (error) {
-    console.error("❌ Error processing reminders:", error.message);
+  } catch (err) {
+    console.error(
+      "❌ Reminder Processing Error:",
+      err.message
+    );
   }
 };
 
-/**
- * Cron job configuration
- * Runs every minute to check and send reminders
- * Pattern: * * * * *
- * Format: Minute Hour Day Month WeekDay
- */
 cron.schedule("* * * * *", () => {
   processReminders();
 });
 
-module.exports = { processReminders };
+module.exports = {
+  processReminders,
+};
