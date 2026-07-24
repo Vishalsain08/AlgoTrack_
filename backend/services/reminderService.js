@@ -15,6 +15,10 @@ const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
+  requireTLS: true,
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
   auth: {
     user: process.env.BREVO_LOGIN,
     pass: process.env.BREVO_SMTP_KEY,
@@ -38,7 +42,7 @@ transporter.verify(function (error, success) {
  */
 const sendEmailReminder = async (email, contestId, platform, contestTime) => {
   const mailOptions = {
-    from: userEmail,
+    from: process.env.BREVO_LOGIN,
     to: email,
     subject: `🚨 Reminder: Upcoming ${platform} Contest (ID: ${contestId}) Starts Soon!`,
     text: `Hello Champion! 🎯

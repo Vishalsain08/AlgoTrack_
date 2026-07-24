@@ -93,17 +93,19 @@ class OTPController {
             otpManager.storeOTP(email, otp);
 
             // Configure email transport
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS,
-                },
-            });
+const transporter = nodemailer.createTransport({
+    host: "smtp-relay.brevo.com",
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.BREVO_LOGIN,
+        pass: process.env.BREVO_SMTP_KEY,
+    },
+});
 
             // Send email with OTP
             await transporter.sendMail({
-                from: process.env.EMAIL_USER,
+                from: process.env.BREVO_LOGIN,
                 to: email,
                 subject: "Your OTP for Email Verification",
                 html: `
