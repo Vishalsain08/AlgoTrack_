@@ -42,7 +42,7 @@ transporter.verify(function (error, success) {
  */
 const sendEmailReminder = async (email, contestId, platform, contestTime) => {
   const mailOptions = {
-    from: process.env.BREVO_LOGIN,
+    from: `"${process.env.BREVO_SENDER_NAME}" <${process.env.BREVO_SENDER_EMAIL}>`,
     to: email,
     subject: `🚨 Reminder: Upcoming ${platform} Contest (ID: ${contestId}) Starts Soon!`,
     text: `Hello Champion! 🎯

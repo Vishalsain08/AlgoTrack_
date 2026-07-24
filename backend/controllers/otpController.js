@@ -105,7 +105,7 @@ const transporter = nodemailer.createTransport({
 
             // Send email with OTP
             await transporter.sendMail({
-                from: process.env.BREVO_LOGIN,
+                from: `"${process.env.BREVO_SENDER_NAME}" <${process.env.BREVO_SENDER_EMAIL}>`,
                 to: email,
                 subject: "Your OTP for Email Verification",
                 html: `
